@@ -39,7 +39,21 @@ function initializeDatabase() {
 
 // Routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const pathsToTry = [
+    path.join(__dirname, 'public', 'index.html'),
+    path.join(__dirname, 'index.html'),
+    path.join(process.cwd(), 'public', 'index.html'),
+    path.join(process.cwd(), 'index.html')
+  ];
+
+  for (const p of pathsToTry) {
+    try {
+      if (require('fs').existsSync(p)) {
+        return res.sendFile(p);
+      }
+    } catch (e) {}
+  }
+  res.status(404).send("Impossible de localiser index.html sur le serveur.");
 });
 
 // API: Collect Data
