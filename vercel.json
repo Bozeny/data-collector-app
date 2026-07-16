@@ -1,13 +1,15 @@
 {
   "version": 2,
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/server.js"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/public/$1"
-    }
+  "builds": [
+    { "src": "api/server.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "styles.css", "use": "@vercel/static" },
+    { "src": "public/js/app.js", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "api/server.js" },
+    { "src": "/styles.css", "dest": "/styles.css" },
+    { "src": "/public/js/app.js", "dest": "/public/js/app.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
