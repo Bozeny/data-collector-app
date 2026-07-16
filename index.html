@@ -4,16 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Collector App</title>
-    <!-- Lien vers votre fichier CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="app">
+
+    <div class="container">
         <h1>Collecteur de Données</h1>
-        <p>Le formulaire ou l'interface de l'application s'affichera ici.</p>
+        <p class="subtitle">Veuillez remplir le formulaire ci-dessous</p>
+
+        <!-- Formulaire de collecte -->
+        <form id="dataForm">
+            <div class="form-group">
+                <label for="username">Nom complet :</label>
+                <input type="text" id="username" name="username" required placeholder="Ex: Jean Dupont">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Adresse Email :</label>
+                <input type="email" id="email" name="email" required placeholder="Ex: jean.dupont@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="message">Données / Message :</label>
+                <textarea id="message" name="message" rows="4" required placeholder="Entrez les données à collecter..."></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn">Envoyer les données</button>
+        </form>
+
+        <!-- Zone pour afficher les messages de succès ou d'erreur -->
+        <div id="responseMessage" class="hidden"></div>
     </div>
 
-    <!-- Lien vers votre logique JavaScript -->
+    <!-- Connexion au script JS dans le dossier public -->
     <script src="public/js/app.js"></script>
 </body>
 </html>
