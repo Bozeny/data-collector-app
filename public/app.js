@@ -28,7 +28,7 @@ async function submitData() {
     }
 
     try {
-        const response = await fetch(`${API_URL}/api/collect-data`, {
+        const response = await fetch(`/api/collect-data`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -54,7 +54,7 @@ async function submitData() {
 // Load Data
 async function loadData() {
     try {
-        const response = await fetch(`${API_URL}/api/data`);
+        const response = await fetch(`/api/data`);
         const result = await response.json();
 
         const container = document.getElementById('dataContainer');
@@ -106,7 +106,7 @@ function showStatus(message, type) {
 // Check Server Status
 async function checkServerStatus() {
     try {
-        const response = await fetch(`${API_URL}/api/health`);
+        const response = await fetch(`/api/health`);
         const result = await response.json();
         console.log('Server status:', result);
     } catch (error) {

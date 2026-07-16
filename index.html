@@ -7,36 +7,33 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
     <div class="container">
         <h1>Collecteur de Données</h1>
-        <p class="subtitle">Veuillez remplir le formulaire ci-dessous</p>
-
-        <!-- Formulaire de collecte -->
-        <form id="dataForm">
+        <p class="subtitle">Veuillez remplir le formulaire pour enregistrer les informations.</p>
+        
+        <form id="collectorForm" onsubmit="event.preventDefault(); submitData();">
             <div class="form-group">
-                <label for="username">Nom complet :</label>
-                <input type="text" id="username" name="username" required placeholder="Ex: Jean Dupont">
+                <label for="field1">Champ 1 :</label>
+                <input type="text" id="field1" required placeholder="Entrez la première donnée...">
             </div>
 
             <div class="form-group">
-                <label for="email">Adresse Email :</label>
-                <input type="email" id="email" name="email" required placeholder="Ex: jean.dupont@email.com">
+                <label for="field2">Champ 2 :</label>
+                <input type="text" id="field2" required placeholder="Entrez la deuxième donnée...">
             </div>
 
             <div class="form-group">
-                <label for="message">Données / Message :</label>
-                <textarea id="message" name="message" rows="4" required placeholder="Entrez les données à collecter..."></textarea>
+                <label for="field3">Champ 3 :</label>
+                <input type="text" id="field3" required placeholder="Entrez la troisième donnée...">
             </div>
 
             <button type="submit" id="submitBtn">Envoyer les données</button>
         </form>
 
-        <!-- Zone pour afficher les messages de succès ou d'erreur -->
-        <div id="responseMessage" class="hidden"></div>
+        <div id="messageStatus" class="status-message"></div>
     </div>
 
-    <!-- Connexion au script JS dans le dossier public -->
-    <script src="/app.js"></script>
+    <!-- Connexion vers votre script JS existant -->
+    <script src="public/js/app.js"></script>
 </body>
 </html>
