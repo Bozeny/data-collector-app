@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Setup Form Handler
 function setupFormHandler() {
-    const form = document.getElementById('dataForm');
+    const form = document.getElementById('collectorForm');
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         await submitData();
