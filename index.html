@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Collector App</title>
+    <title>Data Collector Offline App</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Collecteur de Données</h1>
-        <p class="subtitle">Veuillez remplir le formulaire pour enregistrer les informations.</p>
+        <h1>Collecteur de Données Terrain</h1>
+        <p class="subtitle">Fonctionne à 100% hors-ligne. Les données sont sécurisées localement.</p>
         
-        <form id="collectorForm">
+        <!-- Compteur de sécurité des données -->
+        <div class="counter-box">
+            Données sécurisées sur cet appareil : <strong id="counterLocal">0</strong>
+        </div>
+
+        <form id="collectorForm" onsubmit="event.preventDefault(); submitData();">
             <div class="form-group">
                 <label for="field1">Champ 1 :</label>
                 <input type="text" id="field1" required placeholder="Entrez la première donnée...">
@@ -24,16 +29,24 @@
 
             <div class="form-group">
                 <label for="field3">Champ 3 :</label>
-                <input type="text" id="field3" required placeholder="Entrez la troisième donnée...">
+                <input type="text" id="field3" placeholder="Entrez la troisième donnée...">
             </div>
 
-            <button type="submit" id="submitBtn">Envoyer les données</button>
+            <button type="submit" id="submitBtn">Enregistrer sur l'appareil</button>
         </form>
 
         <div id="messageStatus" class="status-message"></div>
+
+        <!-- Section de récupération pour Microsoft Access -->
+        <div class="export-zone" style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+            <h3>Extraction des données</h3>
+            <button type="button" onclick="exporterPourAccess();" style="background-color: #107c41; color: white;">
+                Télécharger le fichier pour Microsoft Access (.CSV)
+            </button>
+        </div>
     </div>
 
-    <!-- Connexion vers votre script JS existant -->
+    <!-- Connexion vers votre script JS configuré avec point-barre oblique -->
     <script src="./public/js/app.js"></script>
 </body>
 </html>
