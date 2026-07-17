@@ -1,0 +1,17 @@
+{
+  "short_name": "Collector",
+  "name": "Data Collector Offline",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/index.html",
+  "background_color": "#0070f3",
+  "theme_color": "#0070f3",
+  "display": "standalone",
+  "orientation": "portrait"
+}
