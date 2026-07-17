@@ -3,36 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Collector Offline App</title>
+    <title>Data Collector Offline App - PGES Routier</title>
     <link rel="stylesheet" href="styles.css">
-   <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
 </head>
 <body>
     <div class="container">
         <h1>Collecteur de Données Terrain</h1>
-        <p class="subtitle">Stockage persistant automatique après validation.</p>
+        <p class="subtitle">Enregistrement des plaintes et réclamations (MGP).</p>
         
         <div class="counter-box" style="margin-bottom: 20px; padding: 10px; background: #eef; border-radius: 5px;">
-            Formulaires sécurisés localement : <strong id="counterLocal">0</strong>
+            Plaintes sécurisées localement sur l'appareil : <strong id="counterLocal">0</strong>
         </div>
 
         <form id="collectorForm">
+            <!-- Champ 1 : Converti en Liste Déroulante pour Access -->
             <div class="form-group" style="margin-bottom: 15px;">
-                <label for="field1">Champ 1 :</label><br>
-                <input type="text" id="field1" required placeholder="Entrez la première donnée..." style="width: 100%; padding: 8px;">
+                <label for="field1" style="font-weight: bold;">Catégorie de la réclamation :</label><br>
+                <select id="field1" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: white;">
+                    <option value="">-- Sélectionnez un motif --</option>
+                    <option value="Poussière">Poussière / Qualité de l'air</option>
+                    <option value="Fissure bâtiment">Fissure sur infrastructure / bâtiment</option>
+                    <option value="Indemnisation">Problème d'indemnisation / PAR</option>
+                    <option value="Accès coupé">Accès coupé / Mobilité entravée</option>
+                    <option value="Bruit">Nuisance sonore / Bruit nocturne</option>
+                    <option value="VBG/Aspect Social">Aspect Social / Conflit communautaire / VBG</option>
+                </select>
             </div>
 
+            <!-- Champ 2 : Converti en Zone de texte long (Textarea) pour la description -->
             <div class="form-group" style="margin-bottom: 15px;">
-                <label for="field2">Champ 2 :</label><br>
-                <input type="text" id="field2" required placeholder="Entrez la deuxième donnée..." style="width: 100%; padding: 8px;">
+                <label for="field2" style="font-weight: bold;">Description détaillée des faits :</label><br>
+                <textarea id="field2" required placeholder="Expliquez ici les détails de la plainte (lieux, impacts constatés, demandes du plaignant)..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-height: 100px; resize: vertical; font-family: inherit;"></textarea>
             </div>
 
+            <!-- Champ 3 : Saisie de l'ID_PAP (Optionnel) -->
             <div class="form-group" style="margin-bottom: 15px;">
-                <label for="field3">Champ 3 :</label><br>
-                <input type="text" id="field3" placeholder="Entrez la troisième donnée..." style="width: 100%; padding: 8px;">
+                <label for="field3" style="font-weight: bold;">Numéro d'identifiant de la PAP (Optionnel) :</label><br>
+                <input type="number" id="field3" placeholder="Ex: 14 (Laissez vide si la plainte est anonyme)" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <small style="color: #666;">Si le plaignant est recensé dans le Plan d'Action de Réinstallation.</small>
             </div>
 
-            <button type="submit" id="submitBtn" style="padding: 10px 20px; background: #0070f3; color: white; border: none; cursor: pointer;">
+            <button type="submit" id="submitBtn" style="padding: 10px 20px; background: #0070f3; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%;">
                 Enregistrer sur l'appareil
             </button>
         </form>
@@ -41,7 +53,8 @@
 
         <div class="export-zone" style="margin-top: 35px; border-top: 1px solid #ccc; padding-top: 20px;">
             <h3>Extraction pour Microsoft Access</h3>
-            <button type="button" onclick="exporterPourAccess();" style="padding: 10px 20px; background-color: #107c41; color: white; border: none; cursor: pointer;">
+            <p style="font-size: 0.9em; color: #555; margin-bottom: 10px;">Génère un fichier .CSV formaté spécifiquement pour la table <strong>T_Plaintes_MGP</strong>.</p>
+            <button type="button" onclick="exporterPourAccess();" style="padding: 12px 20px; background-color: #107c41; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;">
                 Télécharger le fichier (.CSV)
             </button>
         </div>

@@ -17,7 +17,6 @@ async function demanderAutorisationStockage() {
     if (navigator.storage && navigator.storage.persist) {
         const estDejaPersistant = await navigator.storage.persisted();
         if (!estDejaPersistant) {
-            // Cette ligne provoque l'apparition de la demande d'autorisation sur l'appareil
             const accorde = await navigator.storage.persist();
             if (accorde) {
                 console.log("Stockage permanent accordé et sécurisé.");
@@ -28,7 +27,7 @@ async function demanderAutorisationStockage() {
     }
 }
 
-// Initialisation de la base de données locale
+// Initialisation de la base de données locale (IndexedDB)
 function initialiserBaseDonnees() {
     const request = indexedDB.open('DataCollectorOfflineDB', 1);
 
@@ -49,25 +48,30 @@ function initialiserBaseDonnees() {
 
 // Gestion de la soumission du formulaire
 function handleFormSubmit(event) {
-    event.preventDefault(); // Bloque le rechargement de la page pour ne pas perdre la mémoire
+    event.preventDefault(); // Bloque le rechargement de la page
 
-    const f1 = document.getElementById('field1');
-    const f2 = document.getElementById('field2');
-    const f3 = document.getElementById('field3');
+    // Correspondance avec vos anciens ID HTML (field1, field2, field3)
+    const f1 = document.getElementById('field1'); // Catégorie de Plainte
+    const f2 = document.getElementById('field2'); // Description détaillée
+    const f3 = document.getElementById('field3'); // ID_PAP (Optionnel)
 
+    // Vérification : La catégorie et la description sont obligatoires
     if (!f1.value.trim() || !f2.value.trim()) {
-        alert('Les champs 1 et 2 sont obligatoires.');
+        alert('La catégorie et la description de la plainte sont obligatoires.');
         return;
     }
 
+    // Formatage de la date locale au format attendu par Access (AAAA-MM-JJ HH:MM:SS)
+    const dateLocaleAccess = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
     const newData = {
-        field1: f1.value.trim(),
-        field2: f2.value.trim(),
-        field3: f3.value.trim(),
-        dateSaisie: new Date().toISOString()
+        field1: f1.value.trim(), // Stocké localement mais sera exporté en Categorie_Plainte
+        field2: f2.value.trim(), // Stocké localement mais sera exporté en Description_Plainte
+        field3: f3.value.trim(), // Stocké localement mais sera exporté en ID_PAP
+        dateSaisie: dateLocaleAccess
     };
 
-    // Écriture sécurisée dans l'appareil
+    // Écriture sécurisée dans l'appareil (Tablette/Téléphone)
     const transaction = dbLocal.transaction(['offline_data'], 'readwrite');
     const store = transaction.objectStore('offline_data');
     const addRequest = store.add(newData);
@@ -75,10 +79,12 @@ function handleFormSubmit(event) {
     addRequest.onsuccess = function() {
         // 1. Message de succès
         const statusDiv = document.getElementById('messageStatus');
-        statusDiv.innerHTML = "✅ Données stockées automatiquement !";
-        statusDiv.style.color = "green";
+        if (statusDiv) {
+            statusDiv.innerHTML = "✅ Réclamation enregistrée localement !";
+            statusDiv.style.color = "green";
+        }
 
-        // 2. RENOUVELLEMENT DES CASES (On vide les champs pour la saisie suivante)
+        // 2. RENOUVELLEMENT DES CASES
         f1.value = "";
         f2.value = "";
         f3.value = "";
@@ -99,11 +105,14 @@ function afficherCompteur() {
     const countRequest = store.count();
 
     countRequest.onsuccess = function() {
-        document.getElementById('counterLocal').innerText = countRequest.result;
+        const counterElem = document.getElementById('counterLocal');
+        if (counterElem) {
+            counterElem.innerText = countRequest.result;
+        }
     };
 }
 
-// Export de la base locale vers un fichier Microsoft Access
+// Export de la base locale vers un fichier STRICTEMENT compatible avec votre table Access T_Plaintes_MGP
 function exporterPourAccess() {
     const transaction = dbLocal.transaction(['offline_data'], 'readonly');
     const store = transaction.objectStore('offline_data');
@@ -116,22 +125,32 @@ function exporterPourAccess() {
             return;
         }
 
+        // En-tête utilisant EXACTEMENT les noms des colonnes SQL de la table T_Plaintes_MGP d'Access
+        // On utilise le point-virgule (;) obligatoire pour l'importateur francophone d'Access
         let csvContent = '\uFEFF'; 
-        csvContent += 'ID;Champ1;Champ2;Champ3;DateSaisie\n';
+        csvContent += 'Date_Reception;Categorie_Plainte;Description_Plainte;ID_PAP\n';
         
         rows.forEach(row => {
-            csvContent += `${row.id};"${row.field1}";"${row.field2}";"${row.field3}";"${row.dateSaisie}"\n`;
+            // Sécurité : Doubler les guillemets dans la description au cas où le plaignant en aurait tapé
+            let descriptionNettoyee = row.field2.replace(/"/g, '""');
+            
+            // Si l'ID de la PAP est vide, on s'assure qu'Access reçoive une valeur vide (plainte anonyme)
+            let idPapVal = row.field3 ? row.field3 : "";
+
+            // Génération de la ligne CSV entourée de guillemets pour protéger les textes
+            csvContent += `"${row.dateSaisie}";"${row.field1}";"${descriptionNettoyee}";${idPapVal}\n`;
         });
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", "collecte_terrain_access.csv");
+        link.setAttribute("download", "Plaintes_MGP_Pour_Access.csv");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
 }
+
 // Enregistrement du Service Worker pour le mode 100% hors-ligne
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
