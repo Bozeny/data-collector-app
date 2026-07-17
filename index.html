@@ -9,44 +9,43 @@
 <body>
     <div class="container">
         <h1>Collecteur de Données Terrain</h1>
-        <p class="subtitle">Fonctionne à 100% hors-ligne. Les données sont sécurisées localement.</p>
+        <p class="subtitle">Stockage persistant automatique après validation.</p>
         
-        <!-- Compteur de sécurité des données -->
-        <div class="counter-box">
-            Données sécurisées sur cet appareil : <strong id="counterLocal">0</strong>
+        <div class="counter-box" style="margin-bottom: 20px; padding: 10px; background: #eef; border-radius: 5px;">
+            Formulaires sécurisés localement : <strong id="counterLocal">0</strong>
         </div>
 
-        <form id="collectorForm" onsubmit="event.preventDefault(); submitData();">
-            <div class="form-group">
-                <label for="field1">Champ 1 :</label>
-                <input type="text" id="field1" required placeholder="Entrez la première donnée...">
+        <form id="collectorForm">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="field1">Champ 1 :</label><br>
+                <input type="text" id="field1" required placeholder="Entrez la première donnée..." style="width: 100%; padding: 8px;">
             </div>
 
-            <div class="form-group">
-                <label for="field2">Champ 2 :</label>
-                <input type="text" id="field2" required placeholder="Entrez la deuxième donnée...">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="field2">Champ 2 :</label><br>
+                <input type="text" id="field2" required placeholder="Entrez la deuxième donnée..." style="width: 100%; padding: 8px;">
             </div>
 
-            <div class="form-group">
-                <label for="field3">Champ 3 :</label>
-                <input type="text" id="field3" placeholder="Entrez la troisième donnée...">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="field3">Champ 3 :</label><br>
+                <input type="text" id="field3" placeholder="Entrez la troisième donnée..." style="width: 100%; padding: 8px;">
             </div>
 
-            <button type="submit" id="submitBtn">Enregistrer sur l'appareil</button>
+            <button type="submit" id="submitBtn" style="padding: 10px 20px; background: #0070f3; color: white; border: none; cursor: pointer;">
+                Enregistrer sur l'appareil
+            </button>
         </form>
 
-        <div id="messageStatus" class="status-message"></div>
+        <div id="messageStatus" class="status-message" style="margin-top: 15px; font-weight: bold;"></div>
 
-        <!-- Section de récupération pour Microsoft Access -->
-        <div class="export-zone" style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
-            <h3>Extraction des données</h3>
-            <button type="button" onclick="exporterPourAccess();" style="background-color: #107c41; color: white;">
-                Télécharger le fichier pour Microsoft Access (.CSV)
+        <div class="export-zone" style="margin-top: 35px; border-top: 1px solid #ccc; padding-top: 20px;">
+            <h3>Extraction pour Microsoft Access</h3>
+            <button type="button" onclick="exporterPourAccess();" style="padding: 10px 20px; background-color: #107c41; color: white; border: none; cursor: pointer;">
+                Télécharger le fichier (.CSV)
             </button>
         </div>
     </div>
 
-    <!-- Connexion vers votre script JS configuré avec point-barre oblique -->
     <script src="./public/js/app.js"></script>
 </body>
 </html>
