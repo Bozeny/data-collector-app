@@ -5,11 +5,10 @@ const CACHE_NAME = 'pges-collector-cache-v2';
     '/',
     '/index.html',
     '/styles.css',
-    '/public/app.js', // Doit être strictement identique au src de votre index.html
+    '/public/js/app.js',
     '/manifest.json'
 ];
 
-];
 
 // Événement d'installation : On télécharge et on verrouille les fichiers dans l'appareil
 self.addEventListener('install', (event) => {
