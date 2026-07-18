@@ -1,15 +1,27 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/server.js", "use": "@vercel/node" },
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "styles.css", "use": "@vercel/static" },
-    { "src": "public/js/app.js", "use": "@vercel/static" }
-  ],
+  "public": true,
+  "cleanUrls": true,
   "routes": [
-    { "src": "/api/(.*)", "dest": "api/server.js" },
-    { "src": "/styles.css", "dest": "/styles.css" },
-    { "src": "/public/js/app.js", "dest": "/public/js/app.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/public/js/app.js",
+      "dest": "/public/js/app.js"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "/sw.js"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "/styles.css",
+      "dest": "/styles.css"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }
