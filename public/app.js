@@ -1,49 +1,48 @@
-// Une seule variable globale propre pour votre base locale
+// Une seule variable globale propre pour votre base locale unifiée
 let dbLocal;
 
 // Déclenchement automatique au chargement de la page
-document.addEventListener('DOMContentLoaded', () => {
-    demanderAutorisationStockage();
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. On lance la base de données en priorité absolue
     initialiserBaseDonnees();
     
-    // Écouteur sur le formulaire pour capter le clic sur le bouton
+    // 2. On demande la persistance de manière sécurisée (sans bloquer Android)
+    try {
+        if (navigator.storage && navigator.storage.persist) {
+            await navigator.storage.persist();
+        }
+    } catch (e) {
+        console.log("Persistance non supportée ou refusée au démarrage.");
+    }
+    
+    // 3. Écouteur sur le formulaire pour capter le clic sur le bouton
     const form = document.getElementById('collectorForm');
     if (form) {
         form.addEventListener('submit', handleFormSubmit);
     }
 });
 
-// Fenêtre d'autorisation unique pour le stockage permanent (PC et Smartphone)
-async function demanderAutorisationStockage() {
-    if (navigator.storage && navigator.storage.persist) {
-        const estDejaPersistant = await navigator.storage.persisted();
-        if (!estDejaPersistant) {
-            const accorde = await navigator.storage.persist();
-            if (accorde) {
-                console.log("Stockage permanent accordé et sécurisé.");
-            } else {
-                console.log("Stockage temporaire activé (attention aux nettoyages système).");
-            }
-        }
-    }
-}
-
 // Initialisation unique de la base de données locale (IndexedDB)
 function initialiserBaseDonnees() {
-    // On garde votre base d'origine
     const request = indexedDB.open('DataCollectorOfflineDB', 1);
 
     request.onupgradeneeded = function(event) {
         dbLocal = event.target.result;
         if (!dbLocal.objectStoreNames.contains('offline_data')) {
+            // Notre table unique pour le PC, le Téléphone et l'export Access
             dbLocal.createObjectStore('offline_data', { keyPath: 'id', autoIncrement: true });
         }
     };
 
     request.onsuccess = function(event) {
         dbLocal = event.target.result;
-        console.log("Base de données locale 'DataCollectorOfflineDB' prête !");
+        console.log("Base de données locale unifiée prête !");
         afficherCompteur();
+        
+        // Dès que l'application s'ouvre, si on a du réseau, on synchronise les anciens restes
+        if (navigator.onLine) {
+            synchroniserDonnees();
+        }
     };
 
     request.onerror = function(event) {
@@ -55,7 +54,6 @@ function initialiserBaseDonnees() {
 function handleFormSubmit(event) {
     event.preventDefault(); // Bloque le rechargement de la page
 
-    // Correspondance avec vos ID HTML
     const f1 = document.getElementById('field1'); // Catégorie de Plainte
     const f2 = document.getElementById('field2'); // Description détaillée
     const f3 = document.getElementById('field3'); // ID_PAP (Optionnel)
@@ -70,10 +68,11 @@ function handleFormSubmit(event) {
     const dateLocaleAccess = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
     const newData = {
-        field1: f1.value.trim(), // Stocké localement mais sera exporté en Categorie_Plainte
-        field2: f2.value.trim(), // Stocké localement mais sera exporté en Description_Plainte
-        field3: f3.value.trim(), // Stocké localement mais sera exporté en ID_PAP
-        dateSaisie: dateLocaleAccess
+        field1: f1.value.trim(), 
+        field2: f2.value.trim(), 
+        field3: f3.value.trim(), 
+        dateSaisie: dateLocaleAccess,
+        synced: false // Ajouté ici : permet de savoir si la ligne est envoyée au serveur Vercel
     };
 
     if (!dbLocal) {
@@ -81,32 +80,81 @@ function handleFormSubmit(event) {
         return;
     }
 
-    // Écriture sécurisée dans l'appareil (Tablette/Téléphone) via votre table d'origine
+    // Écriture sécurisée dans l'appareil (Ordinateur ou Smartphone)
     const transaction = dbLocal.transaction(['offline_data'], 'readwrite');
     const store = transaction.objectStore('offline_data');
     const addRequest = store.add(newData);
 
     addRequest.onsuccess = function() {
-        // 1. Message de succès
+        // Status Visuel
         const statusDiv = document.getElementById('messageStatus');
         if (statusDiv) {
             statusDiv.innerHTML = "✅ Réclamation enregistrée localement !";
             statusDiv.style.color = "green";
         }
 
-        // 2. RENOUVELLEMENT DES CASES
+        // Nettoyage du formulaire
         f1.value = "";
         f2.value = "";
         f3.value = "";
 
-        // 3. Mise à jour du compteur visuel
+        // Mise à jour du compteur à l'écran
         afficherCompteur();
+
+        // NOUVEAUTÉ : Si l'appareil a du réseau tout de suite, on lance la synchronisation vers Vercel
+        if (navigator.onLine) {
+            synchroniserDonnees();
+        }
     };
 
     addRequest.onerror = function() {
         alert("Échec de l'enregistrement automatique.");
     };
 }
+
+// Fonction de Synchronisation automatique vers votre serveur Vercel/Node.js
+function synchroniserDonnees() {
+    if (!dbLocal || !navigator.onLine) return;
+
+    const transaction = dbLocal.transaction(['offline_data'], 'readonly');
+    const store = transaction.objectStore('offline_data');
+    const getAllRequest = store.getAll();
+
+    getAllRequest.onsuccess = function() {
+        const toutesLesDonnees = getAllRequest.result;
+        
+        // On ne filtre que ce qui n'a pas encore été envoyé au serveur
+        const aSynchroniser = toutesLesDonnees.filter(item => !item.synced);
+
+        if (aSynchroniser.length === 0) return; // Rien à envoyer !
+
+        console.log(`PWA : Tentative d'envoi de ${aSynchroniser.length} lignes vers le serveur...`);
+
+        // Envoi à votre API sur Vercel
+        fetch('/api/collecte', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(aSynchroniser)
+        })
+        .then(response => {
+            if (response.ok) {
+                // Si le serveur dit OK, on marque ces lignes comme synchronisées localement
+                const updateTransaction = dbLocal.transaction(['offline_data'], 'readwrite');
+                const updateStore = updateTransaction.objectStore('offline_data');
+                
+                aSynchroniser.forEach(item => {
+                    item.synced = true;
+                    updateStore.put(item); // Met à jour l'élément sans détruire l'export Access
+                });
+                console.log("PWA : Synchronisation serveur réussie !");
+            }
+        })
+        .catch(err => console.error("Réseau instable, envoi reporté :", err));
+    };
+}
+
+// Écouter si le réseau revient pendant que l'utilisateur utilise l'application
+window.addEventListener('online', synchroniserDonnees);
 
 function afficherCompteur() {
     if (!dbLocal) return;
@@ -122,7 +170,7 @@ function afficherCompteur() {
     };
 }
 
-// Export de la base locale vers un fichier STRICTEMENT compatible avec votre table Access T_Plaintes_MGP
+// Export inchangé pour Microsoft Access (Garde toutes les données)
 function exporterPourAccess() {
     if (!dbLocal) return;
     const transaction = dbLocal.transaction(['offline_data'], 'readonly');
@@ -136,7 +184,6 @@ function exporterPourAccess() {
             return;
         }
 
-        // En-tête utilisant EXACTEMENT les noms des colonnes SQL de la table T_Plaintes_MGP d'Access
         let csvContent = '\uFEFF'; 
         csvContent += 'Date_Reception;Categorie_Plainte;Description_Plainte;ID_PAP\n';
         
@@ -156,7 +203,7 @@ function exporterPourAccess() {
     };
 }
 
-// Enregistrement du Service Worker pour le mode 100% hors-ligne
+// Enregistrement du Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
