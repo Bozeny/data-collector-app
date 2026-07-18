@@ -1,12 +1,14 @@
 const CACHE_NAME = 'pges-collector-cache-v2';
 
 // 1. Liste de tous les fichiers essentiels de l'interface qui doivent fonctionner SANS réseau
-const ASSETS_TO_CACHE = [
+ const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/styles.css',
-    '/public/js/app.js',
+    '/public/app.js', // Doit être strictement identique au src de votre index.html
     '/manifest.json'
+];
+
 ];
 
 // Événement d'installation : On télécharge et on verrouille les fichiers dans l'appareil
