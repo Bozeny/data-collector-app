@@ -14,7 +14,10 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('PWA : Fichiers de l\'interface mis en cache pour le mode hors-ligne.');
-            return cache.addAll(ASSETS_TO_CACHE);
+            // Sécurité : .addAll peut échouer complètement si un seul fichier renvoie une erreur 404
+            return cache.addAll(ASSETS_TO_CACHE).catch(err => {
+                console.error('PWA Erreur : Impossible de mettre en cache les assets. Vérifiez les chemins.', err);
+            });
         })
     );
     self.skipWaiting();
@@ -37,23 +40,31 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Événement d'interception (FETCH) : LE CŒUR DU MODE HORS-LIGNE
-// Si l'appareil est déconnecté, le Service Worker bloque la requête réseau et donne le fichier local du cache
+// Événement d'interception (FETCH) : Mode Hors-ligne + Mise à jour en tâche de fond
 self.addEventListener('fetch', (event) => {
-    // On ne gère pas les requêtes tierces ou d'API, uniquement nos fichiers d'interface
     if (event.request.method !== 'GET') return;
+
+    // Optionnel : Ne pas intercepter les requêtes vers vos API de données ou extensions Chrome
+    if (event.request.url.includes('/api/') || !event.request.url.startsWith(self.location.origin)) return;
 
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
-            // Si le fichier est dans le cache, on le fournit instantanément (Même sans réseau !)
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-            // Sinon, on tente de le récupérer sur internet
-            return fetch(event.request).catch(() => {
-                // Optionnel : Vous pourriez renvoyer vers une page d'erreur personnalisée ici
-                console.error('PWA : Fichier introuvable hors-ligne et non présent dans le cache.');
+            // On lance la requête réseau en tâche de fond
+            const fetchPromise = fetch(event.request).then((networkResponse) => {
+                // Si la réponse est valide, on met à jour le cache
+                if (networkResponse && networkResponse.status === 200) {
+                    const cacheCopy = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, cacheCopy);
+                    });
+                }
+                return networkResponse;
+            }).catch(() => {
+                // Erreur réseau silencieuse (on est hors-ligne)
             });
+
+            // On renvoie le fichier du cache s'il existe, sinon on attend le réseau
+            return cachedResponse || fetchPromise;
         })
     );
 });

@@ -1,3 +1,4 @@
+// Une seule variable globale propre pour votre base locale
 let dbLocal;
 
 // Déclenchement automatique au chargement de la page
@@ -27,17 +28,21 @@ async function demanderAutorisationStockage() {
     }
 }
 
-// Initialisation de la base de données locale (IndexedDB)
+// Initialisation unique de la base de données locale (IndexedDB)
 function initialiserBaseDonnees() {
+    // On garde votre base d'origine
     const request = indexedDB.open('DataCollectorOfflineDB', 1);
 
     request.onupgradeneeded = function(event) {
         dbLocal = event.target.result;
-        dbLocal.createObjectStore('offline_data', { keyPath: 'id', autoIncrement: true });
+        if (!dbLocal.objectStoreNames.contains('offline_data')) {
+            dbLocal.createObjectStore('offline_data', { keyPath: 'id', autoIncrement: true });
+        }
     };
 
     request.onsuccess = function(event) {
         dbLocal = event.target.result;
+        console.log("Base de données locale 'DataCollectorOfflineDB' prête !");
         afficherCompteur();
     };
 
@@ -50,7 +55,7 @@ function initialiserBaseDonnees() {
 function handleFormSubmit(event) {
     event.preventDefault(); // Bloque le rechargement de la page
 
-    // Correspondance avec vos anciens ID HTML (field1, field2, field3)
+    // Correspondance avec vos ID HTML
     const f1 = document.getElementById('field1'); // Catégorie de Plainte
     const f2 = document.getElementById('field2'); // Description détaillée
     const f3 = document.getElementById('field3'); // ID_PAP (Optionnel)
@@ -71,7 +76,12 @@ function handleFormSubmit(event) {
         dateSaisie: dateLocaleAccess
     };
 
-    // Écriture sécurisée dans l'appareil (Tablette/Téléphone)
+    if (!dbLocal) {
+        alert("Le stockage local n'est pas encore prêt. Réessayez dans une seconde.");
+        return;
+    }
+
+    // Écriture sécurisée dans l'appareil (Tablette/Téléphone) via votre table d'origine
     const transaction = dbLocal.transaction(['offline_data'], 'readwrite');
     const store = transaction.objectStore('offline_data');
     const addRequest = store.add(newData);
@@ -114,6 +124,7 @@ function afficherCompteur() {
 
 // Export de la base locale vers un fichier STRICTEMENT compatible avec votre table Access T_Plaintes_MGP
 function exporterPourAccess() {
+    if (!dbLocal) return;
     const transaction = dbLocal.transaction(['offline_data'], 'readonly');
     const store = transaction.objectStore('offline_data');
     const getAllRequest = store.getAll();
@@ -126,18 +137,12 @@ function exporterPourAccess() {
         }
 
         // En-tête utilisant EXACTEMENT les noms des colonnes SQL de la table T_Plaintes_MGP d'Access
-        // On utilise le point-virgule (;) obligatoire pour l'importateur francophone d'Access
         let csvContent = '\uFEFF'; 
         csvContent += 'Date_Reception;Categorie_Plainte;Description_Plainte;ID_PAP\n';
         
         rows.forEach(row => {
-            // Sécurité : Doubler les guillemets dans la description au cas où le plaignant en aurait tapé
             let descriptionNettoyee = row.field2.replace(/"/g, '""');
-            
-            // Si l'ID de la PAP est vide, on s'assure qu'Access reçoive une valeur vide (plainte anonyme)
             let idPapVal = row.field3 ? row.field3 : "";
-
-            // Génération de la ligne CSV entourée de guillemets pour protéger les textes
             csvContent += `"${row.dateSaisie}";"${row.field1}";"${descriptionNettoyee}";${idPapVal}\n`;
         });
 
