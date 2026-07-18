@@ -1,46 +1,59 @@
-const CACHE_NAME = 'collector-cache-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/public/js/app.js',
-  '/manifest.json'
+const CACHE_NAME = 'pges-collector-cache-v1';
+
+// 1. Liste de tous les fichiers essentiels de l'interface qui doivent fonctionner SANS réseau
+const ASSETS_TO_CACHE = [
+    '/',
+    '/index.html',
+    '/styles.css',
+    '/public/js/app.js',
+    '/manifest.json'
 ];
 
-// Installation : Mise en cache locale de tous les fichiers nécessaires
+// Événement d'installation : On télécharge et on verrouille les fichiers dans l'appareil
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
-  );
-  self.skipWaiting();
-});
-
-// Activation : Nettoyage des anciens caches si nécessaire
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            console.log('PWA : Fichiers de l\'interface mis en cache pour le mode hors-ligne.');
+            return cache.addAll(ASSETS_TO_CACHE);
         })
-      );
-    })
-  );
-  self.clients.claim();
+    );
+    self.skipWaiting();
 });
 
-// Interception des requêtes : Réponse depuis le cache si hors-ligne
-self.addEventListener('fetch', (event) => {
-  // Ne pas intercepter les requêtes de l'API externe si vous en ajoutez plus tard
-  if (event.request.url.includes('/api/')) return;
+// Événement d'activation : Nettoyage des anciens caches si vous mettez à jour l'application
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cache) => {
+                    if (cache !== CACHE_NAME) {
+                        console.log('PWA : Nettoyage de l\'ancien cache.');
+                        return caches.delete(cache);
+                    }
+                })
+            );
+        })
+    );
+    self.clients.claim();
+});
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
-    })
-  );
+// Événement d'interception (FETCH) : LE CŒUR DU MODE HORS-LIGNE
+// Si l'appareil est déconnecté, le Service Worker bloque la requête réseau et donne le fichier local du cache
+self.addEventListener('fetch', (event) => {
+    // On ne gère pas les requêtes tierces ou d'API, uniquement nos fichiers d'interface
+    if (event.request.method !== 'GET') return;
+
+    event.respondWith(
+        caches.match(event.request).then((cachedResponse) => {
+            // Si le fichier est dans le cache, on le fournit instantanément (Même sans réseau !)
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            // Sinon, on tente de le récupérer sur internet
+            return fetch(event.request).catch(() => {
+                // Optionnel : Vous pourriez renvoyer vers une page d'erreur personnalisée ici
+                console.error('PWA : Fichier introuvable hors-ligne et non présent dans le cache.');
+            });
+        })
+    );
 });

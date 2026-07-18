@@ -1,6 +1,6 @@
 {
-  "short_name": "Collector",
-  "name": "Data Collector Offline",
+  "short_name": "PGES Collector",
+  "name": "Collecteur de Données Terrain - PGES",
   "icons": [
     {
       "src": "https://flaticon.com",
