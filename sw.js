@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pges-collector-cache-v1';
+const CACHE_NAME = 'pges-collector-cache-v2';
 
 // 1. Liste de tous les fichiers essentiels de l'interface qui doivent fonctionner SANS réseau
 const ASSETS_TO_CACHE = [
