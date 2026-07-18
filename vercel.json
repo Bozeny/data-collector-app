@@ -1,27 +1,21 @@
 {
-  "version": 2,
-  "public": true,
   "cleanUrls": true,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/public/js/app.js",
-      "dest": "/public/js/app.js"
+      "source": "/public/js/app.js",
+      "destination": "/public/js/app.js"
     },
     {
-      "src": "/sw.js",
-      "dest": "/sw.js"
+      "source": "/sw.js",
+      "destination": "/sw.js"
     },
     {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
+      "source": "/manifest.json",
+      "destination": "/manifest.json"
     },
     {
-      "src": "/styles.css",
-      "dest": "/styles.css"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/styles.css",
+      "destination": "/styles.css"
     }
   ]
 }
